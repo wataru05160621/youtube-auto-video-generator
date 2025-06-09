@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# AWS CDK
+cdk.out/
+infrastructure/cdk.out/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Build outputs
+dist/
+build/
+*/dist/
+*/build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Lambda deployment packages
+*.zip
+
+# Temporary files
+tmp/
+temp/
+
+# AWS credentials (just in case)
+.aws/
+
+# Secrets
+secrets.json
+config/secrets.json
+
+# FFmpeg binaries (should be downloaded during deployment)
+ffmpeg
+ffprobe
+
+# Test coverage
+coverage/
