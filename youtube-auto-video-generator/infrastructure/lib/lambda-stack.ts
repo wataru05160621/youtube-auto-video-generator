@@ -1,0 +1,175 @@
+import * as cdk from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import { Construct } from 'constructs';
+import * as path from 'path';
+
+export interface LambdaStackProps extends cdk.StackProps {
+  stage: string;
+  executionRole: iam.Role;
+  s3Bucket: s3.Bucket;
+}
+
+export interface LambdaFunctions {
+  readSpreadsheetFunction: lambda.Function;
+  generateScriptFunction: lambda.Function;
+  writeScriptFunction: lambda.Function;
+  generateImageFunction: lambda.Function;
+  synthesizeSpeechFunction: lambda.Function;
+  composeVideoFunction: lambda.Function;
+  uploadToYouTubeFunction: lambda.Function;
+}
+
+export class LambdaStack extends cdk.Stack {
+  public readonly functions: LambdaFunctions;
+
+  constructor(scope: Construct, id: string, props: LambdaStackProps) {
+    super(scope, id, props);
+
+    // 共通の環境変数
+    const commonEnvironment = {
+      STAGE: props.stage,
+      S3_BUCKET_NAME: props.s3Bucket.bucketName,
+      OPENAI_API_KEY_SECRET_NAME: `video-generator/openai-api-key-${props.stage}`,
+      GOOGLE_CREDENTIALS_SECRET_NAME: `video-generator/google-credentials-${props.stage}`,
+      YOUTUBE_CREDENTIALS_SECRET_NAME: `video-generator/youtube-credentials-${props.stage}`,
+      AWS_REGION: this.region,
+    };
+
+    // FFmpeg Layer の作成
+    const ffmpegLayer = new lambda.LayerVersion(this, 'FFmpegLayer', {
+      layerVersionName: `video-generator-ffmpeg-layer-${props.stage}`,
+      code: lambda.Code.fromAsset(path.join(__dirname, '../layers/ffmpeg-layer')),
+      compatibleRuntimes: [lambda.Runtime.NODEJS_18_X],
+      description: 'FFmpeg binaries for video processing',
+    });
+
+    // 1. ReadSpreadsheetFunction
+    this.functions = {
+      readSpreadsheetFunction: new lambda.Function(this, 'ReadSpreadsheetFunction', {
+        functionName: `video-generator-read-spreadsheet-${props.stage}`,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'index.handler',
+        code: lambda.Code.fromAsset(path.join(__dirname, '../../src/ReadSpreadsheetFunction')),
+        role: props.executionRole,
+        timeout: cdk.Duration.minutes(5),
+        memorySize: 256,
+        environment: {
+          ...commonEnvironment,
+          FUNCTION_NAME: 'ReadSpreadsheetFunction',
+        },
+      }),
+
+      // 2. GenerateScriptFunction
+      generateScriptFunction: new lambda.Function(this, 'GenerateScriptFunction', {
+        functionName: `video-generator-generate-script-${props.stage}`,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'index.handler',
+        code: lambda.Code.fromAsset(path.join(__dirname, '../../src/GenerateScriptFunction')),
+        role: props.executionRole,
+        timeout: cdk.Duration.minutes(10),
+        memorySize: 512,
+        environment: {
+          ...commonEnvironment,
+          FUNCTION_NAME: 'GenerateScriptFunction',
+        },
+      }),
+
+      // 3. WriteScriptFunction
+      writeScriptFunction: new lambda.Function(this, 'WriteScriptFunction', {
+        functionName: `video-generator-write-script-${props.stage}`,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'index.handler',
+        code: lambda.Code.fromAsset(path.join(__dirname, '../../src/WriteScriptFunction')),
+        role: props.executionRole,
+        timeout: cdk.Duration.minutes(5),
+        memorySize: 256,
+        environment: {
+          ...commonEnvironment,
+          FUNCTION_NAME: 'WriteScriptFunction',
+        },
+      }),
+
+      // 4. GenerateImageFunction
+      generateImageFunction: new lambda.Function(this, 'GenerateImageFunction', {
+        functionName: `video-generator-generate-image-${props.stage}`,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'index.handler',
+        code: lambda.Code.fromAsset(path.join(__dirname, '../../src/GenerateImageFunction')),
+        role: props.executionRole,
+        timeout: cdk.Duration.minutes(10),
+        memorySize: 1024,
+        environment: {
+          ...commonEnvironment,
+          FUNCTION_NAME: 'GenerateImageFunction',
+        },
+      }),
+
+      // 5. SynthesizeSpeechFunction
+      synthesizeSpeechFunction: new lambda.Function(this, 'SynthesizeSpeechFunction', {
+        functionName: `video-generator-synthesize-speech-${props.stage}`,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'index.handler',
+        code: lambda.Code.fromAsset(path.join(__dirname, '../../src/SynthesizeSpeechFunction')),
+        role: props.executionRole,
+        timeout: cdk.Duration.minutes(10),
+        memorySize: 512,
+        environment: {
+          ...commonEnvironment,
+          FUNCTION_NAME: 'SynthesizeSpeechFunction',
+        },
+      }),
+
+      // 6. ComposeVideoFunction
+      composeVideoFunction: new lambda.Function(this, 'ComposeVideoFunction', {
+        functionName: `video-generator-compose-video-${props.stage}`,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'index.handler',
+        code: lambda.Code.fromAsset(path.join(__dirname, '../../src/ComposeVideoFunction')),
+        role: props.executionRole,
+        timeout: cdk.Duration.minutes(15),
+        memorySize: 2048,
+        layers: [ffmpegLayer],
+        environment: {
+          ...commonEnvironment,
+          FUNCTION_NAME: 'ComposeVideoFunction',
+        },
+      }),
+
+      // 7. UploadToYouTubeFunction
+      uploadToYouTubeFunction: new lambda.Function(this, 'UploadToYouTubeFunction', {
+        functionName: `video-generator-upload-youtube-${props.stage}`,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'index.handler',
+        code: lambda.Code.fromAsset(path.join(__dirname, '../../src/UploadToYouTubeFunction')),
+        role: props.executionRole,
+        timeout: cdk.Duration.minutes(15),
+        memorySize: 1024,
+        environment: {
+          ...commonEnvironment,
+          FUNCTION_NAME: 'UploadToYouTubeFunction',
+        },
+      }),
+    };
+
+    // CloudWatch ログ保持期間設定
+    Object.values(this.functions).forEach((func, index) => {
+      const functionNames = [
+        'ReadSpreadsheet',
+        'GenerateScript', 
+        'WriteScript',
+        'GenerateImage',
+        'SynthesizeSpeech',
+        'ComposeVideo',
+        'UploadToYouTube'
+      ];
+      
+      new cdk.CfnOutput(this, `${functionNames[index]}FunctionArn`, {
+        value: func.functionArn,
+        description: `ARN of the ${functionNames[index]} Lambda function`,
+        exportName: `VideoGenerator-${functionNames[index]}-Function-Arn-${props.stage}`,
+      });
+    });
+  }
+}

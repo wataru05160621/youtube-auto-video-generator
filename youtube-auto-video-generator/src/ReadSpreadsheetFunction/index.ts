@@ -13,9 +13,11 @@ interface SpreadsheetRow {
 
 interface ReadSpreadsheetResult {
   hasData: boolean;
+  success?: boolean;
   rowData?: SpreadsheetRow;
   spreadsheetId?: string;
   executionId: string;
+  error?: string;
 }
 
 const secretsManager = new SecretsManager();
@@ -53,7 +55,7 @@ async function initializeSheetsClient() {
   });
 
   const authClient = await auth.getClient();
-  return google.sheets({ version: 'v4', auth: authClient });
+  return google.sheets({ version: 'v4', auth: auth });
 }
 
 /**
@@ -110,7 +112,8 @@ async function readUnprocessedRow(spreadsheetId: string): Promise<SpreadsheetRow
     return null;
   } catch (error) {
     console.error('Error reading spreadsheet:', error);
-    throw new Error(`Failed to read spreadsheet: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to read spreadsheet: ${errorMessage}`);
   }
 }
 
@@ -129,13 +132,46 @@ export async function handler(
   const executionId = context.awsRequestId;
 
   try {
-    // スプレッドシートIDを環境変数または入力イベントから取得
-    const spreadsheetId = event.spreadsheetId ||
+    // リクエストボディから入力データを解析
+    let input: any = {};
+    
+    if (event.body) {
+      try {
+        input = JSON.parse(event.body);
+      } catch (parseError) {
+        return {
+          statusCode: 400,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            hasData: false,
+            success: false,
+            error: 'Invalid JSON in request body',
+            executionId,
+          }),
+        };
+      }
+    }
+    
+    // スプレッドシートIDを環境変数または入力から取得
+    const spreadsheetId = input.spreadsheetId ||
       process.env.SPREADSHEET_ID ||
       event.queryStringParameters?.spreadsheetId;
 
     if (!spreadsheetId) {
-      throw new Error('Spreadsheet ID is required');
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          hasData: false,
+          success: false,
+          error: 'Spreadsheet ID is required',
+          executionId,
+        }),
+      };
     }
 
     console.log(`Reading spreadsheet: ${spreadsheetId}`);
@@ -145,9 +181,10 @@ export async function handler(
 
     const result: ReadSpreadsheetResult = {
       hasData: rowData !== null,
-      rowData,
+      rowData: rowData || undefined,
       spreadsheetId,
       executionId,
+      success: true,
     };
 
     console.log('ReadSpreadsheetFunction completed successfully', result);
@@ -162,9 +199,11 @@ export async function handler(
   } catch (error) {
     console.error('ReadSpreadsheetFunction failed:', error);
 
+    const errorMessage = error instanceof Error ? error.message : String(error);
     const errorResult = {
       hasData: false,
-      error: error.message,
+      success: false,
+      error: errorMessage,
       executionId,
     };
 

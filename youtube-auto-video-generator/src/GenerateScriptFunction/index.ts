@@ -22,7 +22,9 @@ interface GeneratedScript {
 
 interface ScriptGenerationResult extends ScriptGenerationInput {
   generatedScript: GeneratedScript;
+  success?: boolean;
   timestamp: string;
+  error?: string;
 }
 
 const secretsManager = new SecretsManager();
@@ -136,7 +138,8 @@ async function generateScript(
     return generatedScript;
   } catch (error) {
     console.error('Error generating script with OpenAI:', error);
-    throw new Error(`Failed to generate script: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to generate script: ${errorMessage}`);
   }
 }
 
@@ -153,18 +156,57 @@ export async function handler(
   });
 
   try {
+    // リクエストボディの検証
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: false,
+          error: 'Request body is required',
+          executionId: context.awsRequestId,
+        }),
+      };
+    }
+
     // 入力データの解析
     let input: ScriptGenerationInput;
 
-    if (typeof event.body === 'string') {
-      input = JSON.parse(event.body);
-    } else {
-      input = event as any;
+    try {
+      if (typeof event.body === 'string') {
+        input = JSON.parse(event.body);
+      } else {
+        input = event as any;
+      }
+    } catch (parseError) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: false,
+          error: 'Invalid JSON in request body',
+          executionId: context.awsRequestId,
+        }),
+      };
     }
 
     // 必須フィールドの検証
     if (!input.prompt || !input.videoTheme) {
-      throw new Error('prompt and videoTheme are required');
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: false,
+          error: 'prompt and videoTheme are required',
+          executionId: context.awsRequestId,
+        }),
+      };
     }
 
     console.log('Generating script for:', {
@@ -183,6 +225,7 @@ export async function handler(
     const result: ScriptGenerationResult = {
       ...input,
       generatedScript,
+      success: true,
       timestamp: new Date().toISOString(),
     };
 
@@ -198,13 +241,15 @@ export async function handler(
   } catch (error) {
     console.error('GenerateScriptFunction failed:', error);
 
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        error: error.message,
+        success: false,
+        error: errorMessage,
         executionId: context.awsRequestId,
       }),
     };

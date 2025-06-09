@@ -1,0 +1,20 @@
+{
+  "name": "synthesize-speech-function",
+  "version": "1.0.0",
+  "description": "Lambda function to synthesize speech using Amazon Polly",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "clean": "rm -rf dist node_modules"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1400.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.119",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
