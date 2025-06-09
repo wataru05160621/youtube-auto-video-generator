@@ -1,0 +1,53 @@
+{
+  "name": "youtube-auto-video-generator",
+  "version": "1.0.0",
+  "description": "AWS ネイティブ構成を使った YouTube 自動動画生成パイプライン",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run build:infrastructure && npm run build:functions",
+    "build:infrastructure": "cd infrastructure && npm run build",
+    "build:functions": "npm run build:functions:all",
+    "build:functions:all": "for dir in src/*/; do (cd \"$dir\" && npm install && npm run build 2>/dev/null || true); done",
+    "deploy": "cd infrastructure && npm run deploy",
+    "deploy:dev": "cd infrastructure && npm run deploy -- --profile dev",
+    "deploy:prod": "cd infrastructure && npm run deploy -- --profile prod",
+    "test": "npm run test:infrastructure && npm run test:functions",
+    "test:infrastructure": "cd infrastructure && npm test",
+    "test:functions": "jest",
+    "lint": "eslint src/**/*.ts infrastructure/**/*.ts",
+    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
+    "clean": "npm run clean:infrastructure && npm run clean:functions",
+    "clean:infrastructure": "cd infrastructure && npm run clean",
+    "clean:functions": "find src -name 'node_modules' -type d -exec rm -rf {} + 2>/dev/null || true; find src -name 'dist' -type d -exec rm -rf {} + 2>/dev/null || true"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wataru05160621/youtube-auto-video-generator.git"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "stepfunctions",
+    "youtube",
+    "video-generation",
+    "openai",
+    "polly",
+    "ffmpeg"
+  ],
+  "author": "wataru05160621",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.5.0",
+    "prettier": "^3.0.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
