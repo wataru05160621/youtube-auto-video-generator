@@ -1,0 +1,21 @@
+{
+  "name": "generate-script-function",
+  "version": "1.0.0",
+  "description": "Lambda function to generate video script using OpenAI API",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "clean": "rm -rf dist node_modules"
+  },
+  "dependencies": {
+    "openai": "^4.0.0",
+    "aws-sdk": "^2.1400.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.119",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
