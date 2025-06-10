@@ -129,30 +129,46 @@ export async function handler(
     context: JSON.stringify(context, null, 2),
   });
 
-  const executionId = context.awsRequestId;
+  // リクエストボディから入力データを解析
+  let input: any = {};
 
   try {
-    // リクエストボディから入力データを解析
-    let input: any = {};
-    
-    if (event.body) {
-      try {
-        input = JSON.parse(event.body);
-      } catch (parseError) {
-        return {
-          statusCode: 400,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            hasData: false,
-            success: false,
-            error: 'Invalid JSON in request body',
-            executionId,
-          }),
-        };
-      }
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          hasData: false,
+          success: false,
+          message: 'Request body is required',
+          error: 'Request body is required',
+          executionId: context.awsRequestId,
+        }),
+      };
     }
+    
+    try {
+      input = JSON.parse(event.body);
+    } catch (parseError) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          hasData: false,
+          success: false,
+          message: 'Invalid JSON in request body',
+          error: 'Invalid JSON in request body',
+          executionId: context.awsRequestId,
+        }),
+      };
+    }
+    
+    // executionIdを入力から取得、なければcontextから取得
+    const executionId = input.executionId || context.awsRequestId;
     
     // スプレッドシートIDを環境変数または入力から取得
     const spreadsheetId = input.spreadsheetId ||
@@ -168,6 +184,7 @@ export async function handler(
         body: JSON.stringify({
           hasData: false,
           success: false,
+          message: 'Spreadsheet ID is required',
           error: 'Spreadsheet ID is required',
           executionId,
         }),
@@ -203,8 +220,9 @@ export async function handler(
     const errorResult = {
       hasData: false,
       success: false,
+      message: errorMessage,
       error: errorMessage,
-      executionId,
+      executionId: context.awsRequestId,
     };
 
     return {

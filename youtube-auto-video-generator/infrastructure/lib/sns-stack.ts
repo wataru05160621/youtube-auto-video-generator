@@ -17,21 +17,18 @@ export class SnsStack extends cdk.Stack {
     this.notificationTopic = new sns.Topic(this, 'NotificationTopic', {
       topicName: `video-generator-notifications-${props.stage}`,
       displayName: `Video Generator Notifications (${props.stage})`,
-      description: 'Notifications for video generation workflow events',
     });
 
     // エラー通知用のトピック
     const errorTopic = new sns.Topic(this, 'ErrorNotificationTopic', {
       topicName: `video-generator-errors-${props.stage}`,
       displayName: `Video Generator Errors (${props.stage})`,
-      description: 'Error notifications for video generation workflow',
     });
 
     // 成功通知用のトピック
     const successTopic = new sns.Topic(this, 'SuccessNotificationTopic', {
       topicName: `video-generator-success-${props.stage}`,
       displayName: `Video Generator Success (${props.stage})`,
-      description: 'Success notifications for video generation workflow',
     });
 
     // メール通知の購読を追加（環境変数で設定）

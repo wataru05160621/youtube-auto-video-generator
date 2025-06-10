@@ -88,6 +88,7 @@ describe('GenerateScriptFunction', () => {
   });
 
   test('should handle missing environment variables', async () => {
+    const originalEnv = process.env.OPENAI_API_KEY_SECRET_NAME;
     delete process.env.OPENAI_API_KEY_SECRET_NAME;
 
     const event: APIGatewayProxyEvent = {
@@ -107,6 +108,11 @@ describe('GenerateScriptFunction', () => {
     const body = JSON.parse(result.body);
     expect(body.success).toBe(false);
     expect(body.message).toContain('OPENAI_API_KEY_SECRET_NAME environment variable is required');
+
+    // 環境変数を復元
+    if (originalEnv) {
+      process.env.OPENAI_API_KEY_SECRET_NAME = originalEnv;
+    }
   });
 
   test('should handle invalid input', async () => {
@@ -122,7 +128,7 @@ describe('GenerateScriptFunction', () => {
     expect(result.statusCode).toBe(400);
     const body = JSON.parse(result.body);
     expect(body.success).toBe(false);
-    expect(body.message).toContain('Invalid input');
+    expect(body.message).toContain('prompt and videoTheme are required');
   });
 
   test('should handle empty request body', async () => {

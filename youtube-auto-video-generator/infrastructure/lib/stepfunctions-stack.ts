@@ -111,11 +111,7 @@ export class StepFunctionsStack extends cdk.Stack {
 
     // ワークフロー定義
     const definition = readSpreadsheetTask
-      .next(checkDataCondition)
-      .addCatch(errorNotification, {
-        errors: ['States.ALL'],
-        resultPath: '$.error',
-      });
+      .next(checkDataCondition);
 
     // State Machine の作成
     this.stateMachine = new stepfunctions.StateMachine(this, 'VideoGeneratorStateMachine', {

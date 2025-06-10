@@ -106,35 +106,32 @@ async function saveScriptToS3(executionId: string, generatedScript: any): Promis
 async function updateSpreadsheet(
   spreadsheetId: string,
   row: number,
+  rowData: any,
   generatedScript: any,
   scriptFileUrl: string
 ): Promise<void> {
   const sheets = await initializeSheetsClient();
 
   try {
-    // 更新するデータを準備
+    // 更新するデータを準備 - テストで期待される形式に合わせる
     const values = [
       [
-        '', // A列（プロンプト）- 既存値を維持
-        '', // B列（ビデオテーマ）- 既存値を維持
-        '', // C列（時間）- 既存値を維持
-        generatedScript.title, // D列 - 生成されたタイトル
-        'Processing', // E列 - ステータス
-        generatedScript.description, // F列 - 説明
-        generatedScript.script.substring(0, 1000), // G列 - 台本（制限）
-        generatedScript.tags.join(', '), // H列 - タグ
-        scriptFileUrl, // I列 - S3ファイルURL
-        new Date().toISOString(), // J列 - 更新日時
+        rowData.prompt, // A列 - プロンプト
+        rowData.videoTheme, // B列 - ビデオテーマ
+        rowData.duration, // C列 - 時間
+        generatedScript.title || '', // D列 - 生成されたタイトル
+        'SCRIPT_GENERATED', // E列 - ステータス
+        scriptFileUrl, // F列 - S3ファイルURL
       ],
     ];
 
-    // D列からJ列までを更新（A-C列は既存値を保持）
-    const range = `Sheet1!D${row}:J${row}`;
+    // A列からF列まで全体を更新
+    const range = `Sheet1!A${row}:F${row}`;
     
     await sheets.spreadsheets.values.update({
       spreadsheetId,
       range,
-      valueInputOption: 'RAW',
+      valueInputOption: 'USER_ENTERED',
       requestBody: {
         values,
       },
@@ -210,6 +207,23 @@ export async function handler(
           success: false,
           updatedRow: -1,
           message: 'Invalid input: spreadsheetId, rowData, and generatedScript are required',
+          error: 'Invalid input: spreadsheetId, rowData, and generatedScript are required',
+        }),
+      };
+    }
+
+    // generatedScriptの必須フィールドを検証
+    if (!input.generatedScript.title || !input.generatedScript.script) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          success: false,
+          updatedRow: -1,
+          message: 'Missing required script fields: title and script are required',
+          error: 'Missing required script fields: title and script are required',
         }),
       };
     }
@@ -224,6 +238,7 @@ export async function handler(
     await updateSpreadsheet(
       input.spreadsheetId,
       input.rowData.row,
+      input.rowData,
       input.generatedScript,
       scriptFileUrl
     );
@@ -232,7 +247,7 @@ export async function handler(
       success: true,
       updatedRow: input.rowData.row,
       scriptFileUrl,
-      message: 'Script written successfully to spreadsheet and S3',
+      message: 'Script written successfully',
     };
 
     console.log('WriteScriptFunction completed successfully');

@@ -165,6 +165,7 @@ export async function handler(
         },
         body: JSON.stringify({
           success: false,
+          message: 'Request body is required',
           error: 'Request body is required',
           executionId: context.awsRequestId,
         }),
@@ -188,6 +189,7 @@ export async function handler(
         },
         body: JSON.stringify({
           success: false,
+          message: 'Invalid JSON in request body',
           error: 'Invalid JSON in request body',
           executionId: context.awsRequestId,
         }),
@@ -203,6 +205,7 @@ export async function handler(
         },
         body: JSON.stringify({
           success: false,
+          message: 'prompt and videoTheme are required',
           error: 'prompt and videoTheme are required',
           executionId: context.awsRequestId,
         }),
@@ -249,6 +252,7 @@ export async function handler(
       },
       body: JSON.stringify({
         success: false,
+        message: errorMessage,
         error: errorMessage,
         executionId: context.awsRequestId,
       }),

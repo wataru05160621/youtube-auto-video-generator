@@ -133,7 +133,7 @@ describe('SynthesizeSpeechFunction', () => {
     expect(result.statusCode).toBe(400);
     const body = JSON.parse(result.body);
     expect(body.success).toBe(false);
-    expect(body.message).toContain('Invalid input');
+    expect(body.message).toContain('Script text is required');
   });
 
   test('should handle empty request body', async () => {

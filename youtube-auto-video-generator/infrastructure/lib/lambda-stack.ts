@@ -7,7 +7,6 @@ import * as path from 'path';
 
 export interface LambdaStackProps extends cdk.StackProps {
   stage: string;
-  executionRole: iam.Role;
   s3Bucket: s3.Bucket;
 }
 
@@ -23,9 +22,127 @@ export interface LambdaFunctions {
 
 export class LambdaStack extends cdk.Stack {
   public readonly functions: LambdaFunctions;
+  public readonly lambdaExecutionRole: iam.Role;
+  public readonly stepFunctionsExecutionRole: iam.Role;
 
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
+
+    // Lambda実行ロールを作成
+    this.lambdaExecutionRole = new iam.Role(this, 'LambdaExecutionRole', {
+      roleName: `VideoGenerator-Lambda-Role-${props.stage}`,
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+      ],
+      inlinePolicies: {
+        LambdaCustomPolicy: new iam.PolicyDocument({
+          statements: [
+            // S3 アクセス権限
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                's3:GetObject',
+                's3:PutObject',
+                's3:DeleteObject',
+                's3:ListBucket',
+              ],
+              resources: [
+                props.s3Bucket.bucketArn,
+                `${props.s3Bucket.bucketArn}/*`,
+              ],
+            }),
+            // Secrets Manager アクセス権限
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'secretsmanager:GetSecretValue',
+              ],
+              resources: [
+                `arn:aws:secretsmanager:${this.region}:${this.account}:secret:video-generator/*`,
+              ],
+            }),
+            // Polly アクセス権限
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'polly:SynthesizeSpeech',
+                'polly:DescribeVoices',
+              ],
+              resources: ['*'],
+            }),
+            // SNS 発行権限
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'sns:Publish',
+              ],
+              resources: [
+                `arn:aws:sns:${this.region}:${this.account}:video-generator-notifications-${props.stage}`,
+              ],
+            }),
+            // CloudWatch Logs 権限
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'logs:CreateLogGroup',
+                'logs:CreateLogStream',
+                'logs:PutLogEvents',
+              ],
+              resources: [
+                `arn:aws:logs:${this.region}:${this.account}:log-group:/aws/lambda/video-generator-*`,
+              ],
+            }),
+          ],
+        }),
+      },
+    });
+
+    // Step Functions 実行ロール
+    this.stepFunctionsExecutionRole = new iam.Role(this, 'StepFunctionsExecutionRole', {
+      roleName: `VideoGenerator-StepFunctions-Role-${props.stage}`,
+      assumedBy: new iam.ServicePrincipal('states.amazonaws.com'),
+      inlinePolicies: {
+        StepFunctionsCustomPolicy: new iam.PolicyDocument({
+          statements: [
+            // Lambda 実行権限
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'lambda:InvokeFunction',
+              ],
+              resources: [
+                `arn:aws:lambda:${this.region}:${this.account}:function:video-generator-*-${props.stage}`,
+              ],
+            }),
+            // SNS 発行権限
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'sns:Publish',
+              ],
+              resources: [
+                `arn:aws:sns:${this.region}:${this.account}:video-generator-notifications-${props.stage}`,
+              ],
+            }),
+            // CloudWatch Logs 権限
+            new iam.PolicyStatement({
+              effect: iam.Effect.ALLOW,
+              actions: [
+                'logs:CreateLogGroup',
+                'logs:CreateLogStream',
+                'logs:PutLogEvents',
+                'logs:DescribeLogGroups',
+                'logs:DescribeLogStreams',
+              ],
+              resources: [
+                `arn:aws:logs:${this.region}:${this.account}:log-group:/aws/stepfunctions/video-generator-*`,
+              ],
+            }),
+          ],
+        }),
+      },
+    });
 
     // 共通の環境変数
     const commonEnvironment = {
@@ -34,7 +151,6 @@ export class LambdaStack extends cdk.Stack {
       OPENAI_API_KEY_SECRET_NAME: `video-generator/openai-api-key-${props.stage}`,
       GOOGLE_CREDENTIALS_SECRET_NAME: `video-generator/google-credentials-${props.stage}`,
       YOUTUBE_CREDENTIALS_SECRET_NAME: `video-generator/youtube-credentials-${props.stage}`,
-      AWS_REGION: this.region,
     };
 
     // FFmpeg Layer の作成
@@ -52,7 +168,7 @@ export class LambdaStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/ReadSpreadsheetFunction')),
-        role: props.executionRole,
+        role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(5),
         memorySize: 256,
         environment: {
@@ -67,7 +183,7 @@ export class LambdaStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/GenerateScriptFunction')),
-        role: props.executionRole,
+        role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(10),
         memorySize: 512,
         environment: {
@@ -82,7 +198,7 @@ export class LambdaStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/WriteScriptFunction')),
-        role: props.executionRole,
+        role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(5),
         memorySize: 256,
         environment: {
@@ -97,7 +213,7 @@ export class LambdaStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/GenerateImageFunction')),
-        role: props.executionRole,
+        role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(10),
         memorySize: 1024,
         environment: {
@@ -112,7 +228,7 @@ export class LambdaStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/SynthesizeSpeechFunction')),
-        role: props.executionRole,
+        role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(10),
         memorySize: 512,
         environment: {
@@ -127,7 +243,7 @@ export class LambdaStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/ComposeVideoFunction')),
-        role: props.executionRole,
+        role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(15),
         memorySize: 2048,
         layers: [ffmpegLayer],
@@ -143,7 +259,7 @@ export class LambdaStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/UploadToYouTubeFunction')),
-        role: props.executionRole,
+        role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(15),
         memorySize: 1024,
         environment: {

@@ -104,10 +104,11 @@ describe('WriteScriptFunction', () => {
     expect(body.success).toBe(true);
     expect(body.updatedRow).toBe(2);
     expect(body.scriptFileUrl).toContain('s3://test-bucket/scripts/');
-    expect(body.message).toContain('Successfully wrote script');
+    expect(body.message).toContain('Script written successfully');
   });
 
   test('should handle missing environment variables', async () => {
+    const originalEnv = process.env.GOOGLE_CREDENTIALS_SECRET_NAME;
     delete process.env.GOOGLE_CREDENTIALS_SECRET_NAME;
 
     const event: APIGatewayProxyEvent = {
@@ -137,6 +138,11 @@ describe('WriteScriptFunction', () => {
     const body = JSON.parse(result.body);
     expect(body.success).toBe(false);
     expect(body.message).toContain('GOOGLE_CREDENTIALS_SECRET_NAME environment variable is required');
+
+    // 環境変数を復元
+    if (originalEnv) {
+      process.env.GOOGLE_CREDENTIALS_SECRET_NAME = originalEnv;
+    }
   });
 
   test('should handle invalid input', async () => {
