@@ -76,11 +76,23 @@ aws configure --profile prod
 
 ### 4. 必要な API キーの設定
 
-AWS Secrets Manager に以下の秘密情報を保存：
+#### 🚀 クイックセットアップ（推奨）
+```bash
+# 自動設定スクリプトを実行
+./scripts/setup-secrets.sh
 
-- `openai-api-key`: OpenAI API キー
-- `google-sheets-credentials`: Google Sheets API 認証情報
-- `youtube-api-credentials`: YouTube Data API 認証情報
+# 設定確認
+./scripts/test-secrets.sh
+```
+
+#### 📋 必要なAPI キー
+AWS Secrets Manager に以下の認証情報を設定：
+
+- **OpenAI API キー**: `video-generator/openai-api-key-dev`
+- **Google認証情報**: `video-generator/google-credentials-dev`  
+- **YouTube認証情報**: `video-generator/youtube-credentials-dev`
+
+詳細な設定方法は [クイックスタートガイド](./SECRETS_QUICKSTART.md) または [詳細設定ガイド](./SECRETS_MANAGER_SETUP_GUIDE.md) を参照してください。
 
 ### 5. デプロイ
 
