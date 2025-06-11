@@ -10,7 +10,6 @@
     "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
-    "aws-sdk": "^2.1400.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.119",

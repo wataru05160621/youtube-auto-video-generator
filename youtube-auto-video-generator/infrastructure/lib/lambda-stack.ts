@@ -4,10 +4,12 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 import * as path from 'path';
+import { LambdaLayersStack } from './lambda-layers-stack';
 
 export interface LambdaStackProps extends cdk.StackProps {
   stage: string;
   s3Bucket: s3.Bucket;
+  layersStack: LambdaLayersStack;
 }
 
 export interface LambdaFunctions {
@@ -153,14 +155,6 @@ export class LambdaStack extends cdk.Stack {
       YOUTUBE_CREDENTIALS_SECRET_NAME: `video-generator/youtube-credentials-${props.stage}`,
     };
 
-    // FFmpeg Layer の作成
-    const ffmpegLayer = new lambda.LayerVersion(this, 'FFmpegLayer', {
-      layerVersionName: `video-generator-ffmpeg-layer-${props.stage}`,
-      code: lambda.Code.fromAsset(path.join(__dirname, '../layers/ffmpeg-layer')),
-      compatibleRuntimes: [lambda.Runtime.NODEJS_18_X],
-      description: 'FFmpeg binaries for video processing',
-    });
-
     // 1. ReadSpreadsheetFunction
     this.functions = {
       readSpreadsheetFunction: new lambda.Function(this, 'ReadSpreadsheetFunction', {
@@ -171,6 +165,7 @@ export class LambdaStack extends cdk.Stack {
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(5),
         memorySize: 256,
+        layers: [props.layersStack.commonLayer, props.layersStack.googleApisLayer],
         environment: {
           ...commonEnvironment,
           FUNCTION_NAME: 'ReadSpreadsheetFunction',
@@ -186,6 +181,7 @@ export class LambdaStack extends cdk.Stack {
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(10),
         memorySize: 512,
+        layers: [props.layersStack.commonLayer],
         environment: {
           ...commonEnvironment,
           FUNCTION_NAME: 'GenerateScriptFunction',
@@ -201,6 +197,7 @@ export class LambdaStack extends cdk.Stack {
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(5),
         memorySize: 256,
+        layers: [props.layersStack.commonLayer, props.layersStack.googleApisLayer],
         environment: {
           ...commonEnvironment,
           FUNCTION_NAME: 'WriteScriptFunction',
@@ -216,6 +213,7 @@ export class LambdaStack extends cdk.Stack {
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(10),
         memorySize: 1024,
+        layers: [props.layersStack.commonLayer],
         environment: {
           ...commonEnvironment,
           FUNCTION_NAME: 'GenerateImageFunction',
@@ -231,6 +229,7 @@ export class LambdaStack extends cdk.Stack {
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(10),
         memorySize: 512,
+        layers: [props.layersStack.commonLayer],
         environment: {
           ...commonEnvironment,
           FUNCTION_NAME: 'SynthesizeSpeechFunction',
@@ -246,7 +245,7 @@ export class LambdaStack extends cdk.Stack {
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(15),
         memorySize: 2048,
-        layers: [ffmpegLayer],
+        layers: [props.layersStack.commonLayer],
         environment: {
           ...commonEnvironment,
           FUNCTION_NAME: 'ComposeVideoFunction',
@@ -262,6 +261,7 @@ export class LambdaStack extends cdk.Stack {
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(15),
         memorySize: 1024,
+        layers: [props.layersStack.commonLayer, props.layersStack.googleApisLayer],
         environment: {
           ...commonEnvironment,
           FUNCTION_NAME: 'UploadToYouTubeFunction',

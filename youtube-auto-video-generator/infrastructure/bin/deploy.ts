@@ -2,6 +2,7 @@
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { S3Stack } from '../lib/s3-stack';
+import { LambdaLayersStack } from '../lib/lambda-layers-stack';
 import { LambdaStack } from '../lib/lambda-stack';
 import { StepFunctionsStack } from '../lib/stepfunctions-stack';
 import { SnsStack } from '../lib/sns-stack';
@@ -23,11 +24,18 @@ const s3Stack = new S3Stack(app, `VideoGenerator-S3-${stage}`, {
   stage,
 });
 
+// Lambda Layers の作成
+const lambdaLayersStack = new LambdaLayersStack(app, `VideoGenerator-Layers-${stage}`, {
+  env,
+  stage,
+});
+
 // Lambda 関数の作成（IAMロールも含む）
 const lambdaStack = new LambdaStack(app, `VideoGenerator-Lambda-${stage}`, {
   env,
   stage,
   s3Bucket: s3Stack.bucket,
+  layersStack: lambdaLayersStack,
 });
 
 // Step Functions とEventBridge の作成
@@ -45,6 +53,7 @@ const snsStack = new SnsStack(app, `VideoGenerator-SNS-${stage}`, {
 });
 
 // スタック間の依存関係設定
-lambdaStack.addDependency(s3Stack);
+lambdaLayersStack.addDependency(s3Stack);
+lambdaStack.addDependency(lambdaLayersStack);
 stepFunctionsStack.addDependency(lambdaStack);
 snsStack.addDependency(lambdaStack);

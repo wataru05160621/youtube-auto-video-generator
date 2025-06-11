@@ -14,7 +14,7 @@ export class S3Stack extends cdk.Stack {
 
     // メインのストレージバケット
     this.bucket = new s3.Bucket(this, 'VideoGeneratorBucket', {
-      bucketName: `video-generator-bucket-${props.stage}`,
+      // bucketName を削除してCDKに自動生成させる
       versioned: false,
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -23,15 +23,15 @@ export class S3Stack extends cdk.Stack {
         {
           id: 'DeleteOldFiles',
           enabled: true,
-          expiration: cdk.Duration.days(30), // 30日後に自動削除
+          expiration: cdk.Duration.days(90), // Glacier移行後にさらに30日保存
           transitions: [
             {
               storageClass: s3.StorageClass.INFREQUENT_ACCESS,
-              transitionAfter: cdk.Duration.days(7),
+              transitionAfter: cdk.Duration.days(30), // 30日以上である必要がある
             },
             {
               storageClass: s3.StorageClass.GLACIER,
-              transitionAfter: cdk.Duration.days(14),
+              transitionAfter: cdk.Duration.days(60), // IA後さらに30日
             },
           ],
         },

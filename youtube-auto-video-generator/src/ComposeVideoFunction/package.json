@@ -11,8 +11,8 @@
     "lint:fix": "eslint . --ext .ts --fix"
   },
   "dependencies": {
-    "aws-sdk": "^2.1691.0",
-    "child_process": "^1.0.2"
+    "child_process": "^1.0.2",
+    "fluent-ffmpeg": "^2.1.2"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",

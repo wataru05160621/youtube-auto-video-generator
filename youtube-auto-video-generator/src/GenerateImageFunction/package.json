@@ -10,9 +10,7 @@
     "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
-    "openai": "^4.0.0",
-    "aws-sdk": "^2.1400.0",
-    "axios": "^1.6.0"
+    "openai": "^4.0.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.119",

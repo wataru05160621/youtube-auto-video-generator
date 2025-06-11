@@ -1,0 +1,13 @@
+{
+  "name": "common-layer",
+  "version": "1.0.0",
+  "description": "Common dependencies for Lambda functions",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.470.0",
+    "@aws-sdk/client-secrets-manager": "^3.470.0",
+    "@aws-sdk/client-sfn": "^3.470.0",
+    "@aws-sdk/client-sns": "^3.470.0",
+    "axios": "^1.6.2",
+    "uuid": "^9.0.1"
+  }
+}
