@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { SecretsManager, S3 } from 'aws-sdk';
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { google } from 'googleapis';
 
 interface WriteScriptInput {
@@ -28,8 +29,8 @@ interface WriteScriptResult {
   message: string;
 }
 
-const secretsManager = new SecretsManager();
-const s3 = new S3();
+const secretsManager = new SecretsManagerClient();
+const s3 = new S3Client();
 
 /**
  * Google Sheets API の認証情報を取得
@@ -41,7 +42,7 @@ async function getGoogleCredentials(): Promise<any> {
   }
 
   try {
-    const result = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
+    const result = await secretsManager.send(new GetSecretValueCommand({ SecretId: secretName }));
     if (!result.SecretString) {
       throw new Error('Secret string is empty');
     }
@@ -80,7 +81,7 @@ async function saveScriptToS3(executionId: string, generatedScript: any): Promis
   const key = `scripts/${timestamp}-${executionId}.json`;
 
   try {
-    await s3.putObject({
+    const putObjectCommand = new PutObjectCommand({
       Bucket: bucketName,
       Key: key,
       Body: JSON.stringify(generatedScript, null, 2),
@@ -90,7 +91,9 @@ async function saveScriptToS3(executionId: string, generatedScript: any): Promis
         timestamp: new Date().toISOString(),
         functionName: 'WriteScriptFunction',
       },
-    }).promise();
+    });
+    
+    await s3.send(putObjectCommand);
 
     return `s3://${bucketName}/${key}`;
   } catch (error) {

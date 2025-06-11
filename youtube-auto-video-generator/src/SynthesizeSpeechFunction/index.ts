@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { Polly, S3 } from 'aws-sdk';
+import { PollyClient, SynthesizeSpeechCommand } from '@aws-sdk/client-polly';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
 interface SynthesizeSpeechInput {
   generatedScript: {
@@ -21,8 +22,8 @@ interface SynthesizeSpeechResult {
   message: string;
 }
 
-const polly = new Polly();
-const s3 = new S3();
+const polly = new PollyClient();
+const s3 = new S3Client();
 
 /**
  * テキストの長さから推定再生時間を計算（秒）
@@ -73,22 +74,41 @@ async function synthesizeSpeech(
   try {
     console.log(`Synthesizing speech with voice: ${voiceId}, language: ${language}`);
 
-    const params = {
+    const command = new SynthesizeSpeechCommand({
       Text: text,
       OutputFormat: 'mp3',
-      VoiceId: voiceId,
-      LanguageCode: language,
+      VoiceId: voiceId as any,
+      LanguageCode: language as any,
       Engine: 'neural', // より自然な音声のため
       SampleRate: '22050', // 高品質音声
-    };
+    });
 
-    const result = await polly.synthesizeSpeech(params).promise();
+    const result = await polly.send(command);
 
     if (!result.AudioStream) {
       throw new Error('No audio stream returned from Polly');
     }
 
-    return result.AudioStream as Buffer;
+    // Convert the AudioStream to Buffer
+    if (result.AudioStream instanceof Uint8Array) {
+      return Buffer.from(result.AudioStream);
+    } else {
+      // For streaming responses, collect chunks
+      const chunks: Buffer[] = [];
+      const stream = result.AudioStream as any;
+      
+      return new Promise<Buffer>((resolve, reject) => {
+        stream.on('data', (chunk: Buffer) => {
+          chunks.push(chunk);
+        });
+        stream.on('end', () => {
+          resolve(Buffer.concat(chunks));
+        });
+        stream.on('error', (error: Error) => {
+          reject(error);
+        });
+      });
+    }
   } catch (error) {
     console.error('Error synthesizing speech:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -112,7 +132,7 @@ async function saveAudioToS3(
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const s3Key = `audio/${timestamp}-${executionId}.mp3`;
 
-    await s3.putObject({
+    await s3.send(new PutObjectCommand({
       Bucket: bucketName,
       Key: s3Key,
       Body: audioBuffer,
@@ -122,7 +142,7 @@ async function saveAudioToS3(
         timestamp: new Date().toISOString(),
         functionName: 'SynthesizeSpeechFunction',
       },
-    }).promise();
+    }));
 
     const s3Url = `s3://${bucketName}/${s3Key}`;
     console.log(`Audio saved to S3: ${s3Url}`);

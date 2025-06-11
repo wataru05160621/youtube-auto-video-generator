@@ -7,10 +7,12 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import { LambdaFunctions } from './lambda-stack';
+import { HeavyLambdaFunctions } from './lambda-heavy-stack';
 
 export interface StepFunctionsStackProps extends cdk.StackProps {
   stage: string;
   lambdaFunctions: LambdaFunctions;
+  heavyLambdaFunctions: HeavyLambdaFunctions;
   executionRole: iam.Role;
 }
 
@@ -20,11 +22,12 @@ export class StepFunctionsStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: StepFunctionsStackProps) {
     super(scope, id, props);
 
-    // CloudWatch Logs グループ
-    const logGroup = new logs.LogGroup(this, 'StateMachineLogGroup', {
-      logGroupName: `/aws/stepfunctions/video-generator-${props.stage}`,
-      retention: logs.RetentionDays.ONE_MONTH,
-    });
+    // CloudWatch Logs グループ（既存のものを使用）
+    const logGroup = logs.LogGroup.fromLogGroupName(
+      this, 
+      'StateMachineLogGroup', 
+      `/aws/stepfunctions/video-generator-${props.stage}`
+    );
 
     // Step Functions のタスク定義
     const readSpreadsheetTask = new stepfunctionsTasks.LambdaInvoke(this, 'ReadSpreadsheetTask', {
@@ -58,7 +61,7 @@ export class StepFunctionsStack extends cdk.Stack {
     });
 
     const composeVideoTask = new stepfunctionsTasks.LambdaInvoke(this, 'ComposeVideoTask', {
-      lambdaFunction: props.lambdaFunctions.composeVideoFunction,
+      lambdaFunction: props.heavyLambdaFunctions.composeVideoFunction,
       outputPath: '$.Payload',
       retryOnServiceExceptions: true,
     });

@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Google APIs and authentication libraries",
   "dependencies": {
-    "googleapis": "^128.0.0",
     "google-auth-library": "^9.4.1"
   }
 }

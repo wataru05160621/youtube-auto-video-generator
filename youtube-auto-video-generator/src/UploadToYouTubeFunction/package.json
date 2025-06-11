@@ -11,6 +11,7 @@
     "lint:fix": "eslint . --ext .ts --fix"
   },
   "dependencies": {
+    "google-auth-library": "^9.4.1"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",
@@ -28,7 +29,12 @@
     "testEnvironment": "node",
     "collectCoverage": true,
     "coverageDirectory": "coverage",
-    "coverageReporters": ["text", "lcov"],
-    "testMatch": ["**/__tests__/**/*.test.ts"]
+    "coverageReporters": [
+      "text",
+      "lcov"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.test.ts"
+    ]
   }
 }

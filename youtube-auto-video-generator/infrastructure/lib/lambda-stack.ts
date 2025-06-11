@@ -18,7 +18,6 @@ export interface LambdaFunctions {
   writeScriptFunction: lambda.Function;
   generateImageFunction: lambda.Function;
   synthesizeSpeechFunction: lambda.Function;
-  composeVideoFunction: lambda.Function;
   uploadToYouTubeFunction: lambda.Function;
 }
 
@@ -160,12 +159,12 @@ export class LambdaStack extends cdk.Stack {
       readSpreadsheetFunction: new lambda.Function(this, 'ReadSpreadsheetFunction', {
         functionName: `video-generator-read-spreadsheet-${props.stage}`,
         runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.handler',
+        handler: 'dist/index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/ReadSpreadsheetFunction')),
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(5),
         memorySize: 256,
-        layers: [props.layersStack.commonLayer, props.layersStack.googleApisLayer],
+        layers: [props.layersStack.commonLayer],
         environment: {
           ...commonEnvironment,
           FUNCTION_NAME: 'ReadSpreadsheetFunction',
@@ -176,7 +175,7 @@ export class LambdaStack extends cdk.Stack {
       generateScriptFunction: new lambda.Function(this, 'GenerateScriptFunction', {
         functionName: `video-generator-generate-script-${props.stage}`,
         runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.handler',
+        handler: 'dist/index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/GenerateScriptFunction')),
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(10),
@@ -192,12 +191,12 @@ export class LambdaStack extends cdk.Stack {
       writeScriptFunction: new lambda.Function(this, 'WriteScriptFunction', {
         functionName: `video-generator-write-script-${props.stage}`,
         runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.handler',
+        handler: 'dist/index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/WriteScriptFunction')),
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(5),
         memorySize: 256,
-        layers: [props.layersStack.commonLayer, props.layersStack.googleApisLayer],
+        layers: [props.layersStack.commonLayer],
         environment: {
           ...commonEnvironment,
           FUNCTION_NAME: 'WriteScriptFunction',
@@ -208,7 +207,7 @@ export class LambdaStack extends cdk.Stack {
       generateImageFunction: new lambda.Function(this, 'GenerateImageFunction', {
         functionName: `video-generator-generate-image-${props.stage}`,
         runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.handler',
+        handler: 'dist/index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/GenerateImageFunction')),
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(10),
@@ -224,7 +223,7 @@ export class LambdaStack extends cdk.Stack {
       synthesizeSpeechFunction: new lambda.Function(this, 'SynthesizeSpeechFunction', {
         functionName: `video-generator-synthesize-speech-${props.stage}`,
         runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.handler',
+        handler: 'dist/index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/SynthesizeSpeechFunction')),
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(10),
@@ -236,32 +235,16 @@ export class LambdaStack extends cdk.Stack {
         },
       }),
 
-      // 6. ComposeVideoFunction
-      composeVideoFunction: new lambda.Function(this, 'ComposeVideoFunction', {
-        functionName: `video-generator-compose-video-${props.stage}`,
-        runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.handler',
-        code: lambda.Code.fromAsset(path.join(__dirname, '../../src/ComposeVideoFunction')),
-        role: this.lambdaExecutionRole,
-        timeout: cdk.Duration.minutes(15),
-        memorySize: 2048,
-        layers: [props.layersStack.commonLayer],
-        environment: {
-          ...commonEnvironment,
-          FUNCTION_NAME: 'ComposeVideoFunction',
-        },
-      }),
-
-      // 7. UploadToYouTubeFunction
+      // 6. UploadToYouTubeFunction
       uploadToYouTubeFunction: new lambda.Function(this, 'UploadToYouTubeFunction', {
         functionName: `video-generator-upload-youtube-${props.stage}`,
         runtime: lambda.Runtime.NODEJS_18_X,
-        handler: 'index.handler',
+        handler: 'dist/index.handler',
         code: lambda.Code.fromAsset(path.join(__dirname, '../../src/UploadToYouTubeFunction')),
         role: this.lambdaExecutionRole,
         timeout: cdk.Duration.minutes(15),
-        memorySize: 1024,
-        layers: [props.layersStack.commonLayer, props.layersStack.googleApisLayer],
+        memorySize: 512,
+        layers: [props.layersStack.commonLayer],
         environment: {
           ...commonEnvironment,
           FUNCTION_NAME: 'UploadToYouTubeFunction',
@@ -277,7 +260,6 @@ export class LambdaStack extends cdk.Stack {
         'WriteScript',
         'GenerateImage',
         'SynthesizeSpeech',
-        'ComposeVideo',
         'UploadToYouTube'
       ];
       

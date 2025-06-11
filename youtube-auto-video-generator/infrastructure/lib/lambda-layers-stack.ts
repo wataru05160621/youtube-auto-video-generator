@@ -10,6 +10,7 @@ export interface LambdaLayersStackProps extends cdk.StackProps {
 export class LambdaLayersStack extends cdk.Stack {
   public readonly commonLayer: lambda.LayerVersion;
   public readonly googleApisLayer: lambda.LayerVersion;
+  // public readonly ffmpegLayer: lambda.LayerVersion; // 一時的にコメントアウト
 
   constructor(scope: Construct, id: string, props: LambdaLayersStackProps) {
     super(scope, id, props);
@@ -30,6 +31,16 @@ export class LambdaLayersStack extends cdk.Stack {
       description: 'Google APIs and authentication libraries',
     });
 
+    // FFmpeg layer for video processing - 一時的にコメントアウト
+    /*
+    this.ffmpegLayer = new lambda.LayerVersion(this, 'FFmpegLayer', {
+      layerVersionName: `video-generator-ffmpeg-${props.stage}`,
+      code: lambda.Code.fromAsset(path.join(__dirname, '../../layers/ffmpeg')),
+      compatibleRuntimes: [lambda.Runtime.NODEJS_18_X],
+      description: 'FFmpeg binaries for video processing',
+    });
+    */
+
     // Output layer ARNs for use in other stacks
     new cdk.CfnOutput(this, 'CommonLayerArn', {
       value: this.commonLayer.layerVersionArn,
@@ -40,5 +51,12 @@ export class LambdaLayersStack extends cdk.Stack {
       value: this.googleApisLayer.layerVersionArn,
       exportName: `VideoGenerator-GoogleApisLayer-${props.stage}`,
     });
+
+    /*
+    new cdk.CfnOutput(this, 'FFmpegLayerArn', {
+      value: this.ffmpegLayer.layerVersionArn,
+      exportName: `VideoGenerator-FFmpegLayer-${props.stage}`,
+    });
+    */
   }
 }

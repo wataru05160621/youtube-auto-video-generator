@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import { S3Stack } from '../lib/s3-stack';
 import { LambdaLayersStack } from '../lib/lambda-layers-stack';
 import { LambdaStack } from '../lib/lambda-stack';
+import { LambdaHeavyStack } from '../lib/lambda-heavy-stack';
 import { StepFunctionsStack } from '../lib/stepfunctions-stack';
 import { SnsStack } from '../lib/sns-stack';
 
@@ -38,11 +39,20 @@ const lambdaStack = new LambdaStack(app, `VideoGenerator-Lambda-${stage}`, {
   layersStack: lambdaLayersStack,
 });
 
+// 重い処理のLambda関数（別スタック）
+const lambdaHeavyStack = new LambdaHeavyStack(app, `VideoGenerator-LambdaHeavy-${stage}`, {
+  env,
+  stage,
+  s3Bucket: s3Stack.bucket,
+  layersStack: lambdaLayersStack,
+});
+
 // Step Functions とEventBridge の作成
 const stepFunctionsStack = new StepFunctionsStack(app, `VideoGenerator-StepFunctions-${stage}`, {
   env,
   stage,
   lambdaFunctions: lambdaStack.functions,
+  heavyLambdaFunctions: lambdaHeavyStack.functions,
   executionRole: lambdaStack.stepFunctionsExecutionRole,
 });
 
@@ -55,5 +65,7 @@ const snsStack = new SnsStack(app, `VideoGenerator-SNS-${stage}`, {
 // スタック間の依存関係設定
 lambdaLayersStack.addDependency(s3Stack);
 lambdaStack.addDependency(lambdaLayersStack);
+lambdaHeavyStack.addDependency(lambdaLayersStack);
 stepFunctionsStack.addDependency(lambdaStack);
+stepFunctionsStack.addDependency(lambdaHeavyStack);
 snsStack.addDependency(lambdaStack);

@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { SecretsManager } from 'aws-sdk';
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { google } from 'googleapis';
 
 interface SpreadsheetRow {
@@ -20,7 +20,7 @@ interface ReadSpreadsheetResult {
   error?: string;
 }
 
-const secretsManager = new SecretsManager();
+const secretsManager = new SecretsManagerClient();
 
 /**
  * Google Sheets API の認証情報を取得
@@ -32,7 +32,8 @@ async function getGoogleCredentials(): Promise<any> {
   }
 
   try {
-    const result = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
+    const command = new GetSecretValueCommand({ SecretId: secretName });
+    const result = await secretsManager.send(command);
     if (!result.SecretString) {
       throw new Error('Secret string is empty');
     }

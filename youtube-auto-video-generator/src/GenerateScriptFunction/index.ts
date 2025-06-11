@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { SecretsManager } from 'aws-sdk';
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import OpenAI from 'openai';
 
 interface ScriptGenerationInput {
@@ -27,7 +27,7 @@ interface ScriptGenerationResult extends ScriptGenerationInput {
   error?: string;
 }
 
-const secretsManager = new SecretsManager();
+const secretsManager = new SecretsManagerClient();
 
 /**
  * OpenAI API キーを取得
@@ -39,7 +39,7 @@ async function getOpenAIApiKey(): Promise<string> {
   }
 
   try {
-    const result = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
+    const result = await secretsManager.send(new GetSecretValueCommand({ SecretId: secretName }));
     if (!result.SecretString) {
       throw new Error('Secret string is empty');
     }

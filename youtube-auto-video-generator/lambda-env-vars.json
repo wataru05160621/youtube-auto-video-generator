@@ -1,0 +1,6 @@
+{
+  "Variables": {
+    "S3_BUCKET_NAME": "youtube-auto-video-generator-dev-storage",
+    "FFMPEG_PATH": "/usr/local/bin/ffmpeg"
+  }
+}

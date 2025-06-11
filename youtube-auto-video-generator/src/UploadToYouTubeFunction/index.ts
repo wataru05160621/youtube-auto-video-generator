@@ -1,9 +1,12 @@
 import { Context, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { S3, SecretsManager, SNS } from 'aws-sdk';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import { google, youtube_v3 } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Readable } from 'stream';
 
 // 環境変数
 const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME!;
@@ -12,9 +15,9 @@ const SPREADSHEET_ID = process.env.SPREADSHEET_ID!;
 const SNS_TOPIC_ARN = process.env.SNS_TOPIC_ARN;
 
 // AWSクライアント
-export const createS3Client = () => new S3();
-export const createSecretsManagerClient = () => new SecretsManager();
-export const createSNSClient = () => new SNS();
+export const createS3Client = () => new S3Client();
+export const createSecretsManagerClient = () => new SecretsManagerClient();
+export const createSNSClient = () => new SNSClient();
 
 /**
  * Lambda関数への入力インターフェース
@@ -88,7 +91,7 @@ async function getSecret(secretName: string): Promise<any> {
   try {
     console.log(`Getting secret: ${secretName}`);
     const secretsManager = createSecretsManagerClient();
-    const result = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
+    const result = await secretsManager.send(new GetSecretValueCommand({ SecretId: secretName }));
 
     if (!result.SecretString) {
       throw new Error(`Secret ${secretName} has no SecretString`);
@@ -174,10 +177,11 @@ async function downloadVideoFromS3(s3Url: string, localPath: string): Promise<vo
 
   try {
     const s3 = createS3Client();
-    const response = await s3.getObject({
+    const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,
-    }).promise();
+    });
+    const response = await s3.send(command);
 
     if (!response.Body) {
       throw new Error(`No content found for ${s3Url}`);
@@ -189,7 +193,16 @@ async function downloadVideoFromS3(s3Url: string, localPath: string): Promise<vo
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(localPath, response.Body as Buffer);
+    // Convert stream to buffer
+    const chunks: Buffer[] = [];
+    const stream = response.Body as Readable;
+    
+    for await (const chunk of stream) {
+      chunks.push(chunk);
+    }
+    
+    const bodyBuffer = Buffer.concat(chunks);
+    fs.writeFileSync(localPath, bodyBuffer);
     console.log(`Downloaded video: ${response.ContentLength} bytes`);
   } catch (error) {
     console.error(`Error downloading video from S3:`, error);
@@ -218,7 +231,7 @@ async function uploadToYouTube(
     const credentials = await getYouTubeCredentials();
     const oauth2Client = createOAuth2Client(credentials);
 
-    const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+    const youtube = google.youtube({ version: 'v3', auth: oauth2Client as any });
 
     const requestBody: youtube_v3.Schema$Video = {
       snippet: {
@@ -287,7 +300,7 @@ async function updateSpreadsheet(
     const credentials = await getGoogleSheetsCredentials();
     const oauth2Client = createOAuth2Client(credentials);
 
-    const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
+    const sheets = google.sheets({ version: 'v4', auth: oauth2Client as any });
 
     // 動画URLとステータスを更新
     const updates = [
@@ -331,11 +344,12 @@ async function sendNotification(message: string, subject: string): Promise<void>
 
   try {
     const sns = createSNSClient();
-    await sns.publish({
+    const command = new PublishCommand({
       TopicArn: SNS_TOPIC_ARN,
       Subject: subject,
       Message: message,
-    }).promise();
+    });
+    await sns.send(command);
 
     console.log('SNS notification sent successfully');
   } catch (error) {

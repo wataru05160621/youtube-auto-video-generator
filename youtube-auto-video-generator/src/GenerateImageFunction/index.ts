@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
-import { SecretsManager, S3 } from 'aws-sdk';
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import OpenAI from 'openai';
 import axios from 'axios';
 
@@ -28,8 +29,8 @@ interface GenerateImageResult {
   message: string;
 }
 
-const secretsManager = new SecretsManager();
-const s3 = new S3();
+const secretsManager = new SecretsManagerClient();
+const s3 = new S3Client();
 
 /**
  * OpenAI API キーを取得
@@ -41,7 +42,8 @@ async function getOpenAIApiKey(): Promise<string> {
   }
 
   try {
-    const result = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
+    const command = new GetSecretValueCommand({ SecretId: secretName });
+    const result = await secretsManager.send(command);
     if (!result.SecretString) {
       throw new Error('Secret string is empty');
     }
@@ -83,7 +85,7 @@ async function downloadAndSaveToS3(
     const s3Key = `images/${timestamp}-${executionId}-${index}.png`;
 
     // S3にアップロード
-    await s3.putObject({
+    const putCommand = new PutObjectCommand({
       Bucket: bucketName,
       Key: s3Key,
       Body: imageBuffer,
@@ -94,7 +96,8 @@ async function downloadAndSaveToS3(
         timestamp: new Date().toISOString(),
         functionName: 'GenerateImageFunction',
       },
-    }).promise();
+    });
+    await s3.send(putCommand);
 
     const s3Url = `s3://${bucketName}/${s3Key}`;
     console.log(`Image ${index} saved to S3: ${s3Url}`);
