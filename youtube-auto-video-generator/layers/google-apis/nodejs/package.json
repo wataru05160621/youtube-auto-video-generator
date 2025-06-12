@@ -1,8 +1,0 @@
-{
-  "name": "google-apis-layer",
-  "version": "1.0.0",
-  "description": "Google APIs and authentication libraries",
-  "dependencies": {
-    "google-auth-library": "^9.4.1"
-  }
-}
