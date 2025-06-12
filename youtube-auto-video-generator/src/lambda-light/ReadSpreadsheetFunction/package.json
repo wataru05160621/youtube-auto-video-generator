@@ -1,0 +1,11 @@
+{
+  "name": "read-spreadsheet-function",
+  "version": "1.0.0",
+  "description": "Read video data from Google Spreadsheet",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
