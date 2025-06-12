@@ -11,7 +11,8 @@ AWS ネイティブ構成を使った YouTube 自動動画生成パイプライ�
 - ✅ **AWS リソース完全削除済み**: CloudFormation スタック、Lambda 関数、S3 バケット、Secrets Manager、ECR リポジトリ等
 - ✅ **ローカルコード完全削除済み**: 既存のソースコード、インフラストラクチャコード、設定ファイル等
 - ✅ **設計ドキュメント作成完了**: 新しいアーキテクチャ設計と実装ガイド
-- 🔄 **実装準備中**: 改良されたアーキテクチャでの再構築待ち
+- ✅ **Foundation Layer デプロイ完了**: S3、IAM、Secrets Manager (2025年6月13日)
+- 🔄 **Infrastructure Layer 実装中**: Lambda Layers、SNS、EventBridge
 
 ## システム概要
 
@@ -99,9 +100,15 @@ cdk deploy VideoGen-LambdaLight-dev VideoGen-LambdaHeavy-dev VideoGen-StepFuncti
 
 ## 開発状況
 
-- 🔄 **現在**: 設計完了、実装準備中
-- 📋 **次のステップ**: Foundation Layer の実装開始
+- ✅ **Foundation Layer 完了**: S3、IAM、Secrets Manager デプロイ済み (2025年6月13日)
+- 🔄 **現在**: Infrastructure Layer の実装中
+- 📋 **次のステップ**: Lambda Layers、SNS、EventBridge の実装
 - 🎯 **目標**: 改良されたアーキテクチャでの完全自動化システム構築
+
+### Foundation Layer デプロイ済みリソース
+- **VideoGen-S3-dev**: 動画・アセットストレージバケット
+- **VideoGen-IAM-dev**: Lambda・Step Functions 実行ロール
+- **VideoGen-Secrets-dev**: API認証情報管理
 
 ## AI エージェント対応
 
