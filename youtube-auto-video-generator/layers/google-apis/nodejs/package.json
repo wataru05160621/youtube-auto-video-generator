@@ -1,0 +1,10 @@
+{
+  "name": "google-apis-layer",
+  "version": "1.0.0",
+  "description": "Google APIs client libraries for Spreadsheet and YouTube",
+  "main": "index.js",
+  "dependencies": {
+    "googleapis": "^126.0.0",
+    "google-auth-library": "^9.0.0"
+  }
+}

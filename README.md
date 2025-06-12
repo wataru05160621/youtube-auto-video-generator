@@ -12,7 +12,8 @@ AWS ネイティブ構成を使った YouTube 自動動画生成パイプライ�
 - ✅ **ローカルコード完全削除済み**: 既存のソースコード、インフラストラクチャコード、設定ファイル等
 - ✅ **設計ドキュメント作成完了**: 新しいアーキテクチャ設計と実装ガイド
 - ✅ **Foundation Layer デプロイ完了**: S3、IAM、Secrets Manager (2025年6月13日)
-- 🔄 **Infrastructure Layer 実装中**: Lambda Layers、SNS、EventBridge
+- ✅ **Infrastructure Layer デプロイ完了**: Lambda Layers、SNS、EventBridge (2025年6月13日)
+- 📋 **次のステップ**: Application Layer の実装 - Lambda Functions、Step Functions
 
 ## システム概要
 
@@ -101,14 +102,19 @@ cdk deploy VideoGen-LambdaLight-dev VideoGen-LambdaHeavy-dev VideoGen-StepFuncti
 ## 開発状況
 
 - ✅ **Foundation Layer 完了**: S3、IAM、Secrets Manager デプロイ済み (2025年6月13日)
-- 🔄 **現在**: Infrastructure Layer の実装中
-- 📋 **次のステップ**: Lambda Layers、SNS、EventBridge の実装
+- ✅ **Infrastructure Layer 完了**: Lambda Layers、SNS、EventBridge デプロイ済み (2025年6月13日)
+- 📋 **次のステップ**: Application Layer の実装 - Lambda Functions、Step Functions
 - 🎯 **目標**: 改良されたアーキテクチャでの完全自動化システム構築
 
 ### Foundation Layer デプロイ済みリソース
 - **VideoGen-S3-dev**: 動画・アセットストレージバケット
 - **VideoGen-IAM-dev**: Lambda・Step Functions 実行ロール
 - **VideoGen-Secrets-dev**: API認証情報管理
+
+### Infrastructure Layer デプロイ済みリソース
+- **VideoGen-Layers-dev**: Lambda Layers (Common、FFmpeg、Google APIs)
+- **VideoGen-SNS-dev**: 通知トピック (Video Processing、Error Notification)
+- **VideoGen-Events-dev**: EventBridge (Custom Bus、Manual/Scheduled Rules)
 
 ## AI エージェント対応
 

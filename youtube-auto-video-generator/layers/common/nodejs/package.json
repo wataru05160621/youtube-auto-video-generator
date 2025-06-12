@@ -1,0 +1,14 @@
+{
+  "name": "common-layer",
+  "version": "1.0.0",
+  "description": "Common utilities and shared libraries for video generation",
+  "main": "index.js",
+  "dependencies": {
+    "aws-sdk": "^2.1480.0",
+    "@aws-sdk/client-s3": "^3.400.0",
+    "@aws-sdk/client-secrets-manager": "^3.400.0",
+    "@aws-sdk/client-polly": "^3.400.0",
+    "axios": "^1.5.0",
+    "uuid": "^9.0.0"
+  }
+}
