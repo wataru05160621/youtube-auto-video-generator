@@ -1,11 +1,11 @@
 {
-  "name": "read-spreadsheet-function",
+  "name": "synthesize-speech-function",
   "version": "1.0.0",
-  "description": "Read video data from Google Spreadsheet",
+  "description": "Synthesize speech using Amazon Polly",
   "main": "index.js",
   "dependencies": {
-    "aws-sdk": "^2.1691.0",
-    "googleapis": "^144.0.0"
+    "@aws-sdk/client-polly": "^3.490.0",
+    "@aws-sdk/client-s3": "^3.490.0"
   },
   "devDependencies": {},
   "scripts": {

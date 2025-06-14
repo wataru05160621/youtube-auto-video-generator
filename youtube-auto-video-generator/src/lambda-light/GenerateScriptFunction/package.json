@@ -1,11 +1,10 @@
 {
-  "name": "read-spreadsheet-function",
+  "name": "generate-script-function",
   "version": "1.0.0",
-  "description": "Read video data from Google Spreadsheet",
+  "description": "Generate video script using OpenAI API",
   "main": "index.js",
   "dependencies": {
-    "aws-sdk": "^2.1691.0",
-    "googleapis": "^144.0.0"
+    "@aws-sdk/client-secrets-manager": "^3.490.0"
   },
   "devDependencies": {},
   "scripts": {

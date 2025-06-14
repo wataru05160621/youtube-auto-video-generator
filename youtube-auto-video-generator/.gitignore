@@ -17,3 +17,26 @@ build/
 *.swp
 *.swo
 *~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+test-env/
+venv/
+env/
+ENV/
+
+# Secrets and API keys
+*api-key*
+*token*
+*credential*
+*secret*
+!setup-*-api-key.sh
+!check-api-config.sh
+
+# Test temporary files
+test-*.json
+*.tmp

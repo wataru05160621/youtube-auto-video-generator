@@ -1,10 +1,11 @@
 {
-  "name": "read-spreadsheet-function",
+  "name": "upload-to-youtube-function",
   "version": "1.0.0",
-  "description": "Read video data from Google Spreadsheet",
+  "description": "Upload videos to YouTube using YouTube API",
   "main": "index.js",
   "dependencies": {
-    "aws-sdk": "^2.1691.0",
+    "@aws-sdk/client-s3": "^3.490.0",
+    "@aws-sdk/client-secrets-manager": "^3.490.0",
     "googleapis": "^144.0.0"
   },
   "devDependencies": {},

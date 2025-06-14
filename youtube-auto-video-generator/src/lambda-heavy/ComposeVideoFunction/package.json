@@ -1,11 +1,10 @@
 {
-  "name": "read-spreadsheet-function",
+  "name": "compose-video-function",
   "version": "1.0.0",
-  "description": "Read video data from Google Spreadsheet",
+  "description": "Compose videos using FFmpeg",
   "main": "index.js",
   "dependencies": {
-    "aws-sdk": "^2.1691.0",
-    "googleapis": "^144.0.0"
+    "@aws-sdk/client-s3": "^3.490.0"
   },
   "devDependencies": {},
   "scripts": {

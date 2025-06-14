@@ -1,7 +1,7 @@
 {
-  "name": "read-spreadsheet-function",
+  "name": "write-script-function",
   "version": "1.0.0",
-  "description": "Read video data from Google Spreadsheet",
+  "description": "Write generated scripts back to Google Spreadsheet",
   "main": "index.js",
   "dependencies": {
     "aws-sdk": "^2.1691.0",

@@ -2,7 +2,7 @@
  * Unified resource naming strategy to avoid CloudFormation export conflicts
  */
 export class ResourceNaming {
-  private readonly prefix = 'VideoGen';
+  private readonly prefix = "VideoGen";
   private readonly stage: string;
 
   constructor(stage: string) {
@@ -54,7 +54,9 @@ export class ResourceNaming {
 
   // Lambda function names
   lambdaFunctionName(functionName: string): string {
-    return `${this.prefix.toLowerCase()}-${functionName.toLowerCase()}-${this.stage}`;
+    return `${this.prefix.toLowerCase()}-${functionName.toLowerCase()}-${
+      this.stage
+    }`;
   }
 
   // IAM role names

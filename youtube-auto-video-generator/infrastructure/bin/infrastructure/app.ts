@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-import 'source-map-support/register';
-import * as cdk from 'aws-cdk-lib';
-import { LayersStack } from '../../lib/infrastructure/layers-stack';
-import { SNSStack } from '../../lib/infrastructure/sns-stack';
-import { EventsStack } from '../../lib/infrastructure/events-stack';
-import { getStageConfig } from '../../config/stage-config';
-import { ResourceNaming } from '../../config/resource-naming';
+import "source-map-support/register";
+import * as cdk from "aws-cdk-lib";
+import { LayersStack } from "../../lib/infrastructure/layers-stack";
+import { SNSStack } from "../../lib/infrastructure/sns-stack";
+import { EventsStack } from "../../lib/infrastructure/events-stack";
+import { getStageConfig } from "../../config/stage-config";
+import { ResourceNaming } from "../../config/resource-naming";
 
 const app = new cdk.App();
 
 // Get stage from context or default to 'dev'
-const stage = app.node.tryGetContext('stage') || 'dev';
+const stage = app.node.tryGetContext("stage") || "dev";
 const config = getStageConfig(stage);
 const naming = new ResourceNaming(stage);
 
